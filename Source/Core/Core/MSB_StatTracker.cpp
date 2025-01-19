@@ -649,9 +649,10 @@ void StatTracker::logPitch(const Core::CPUThreadGuard& guard, Event& in_event){
     
     u8 stars_avaialable = (in_event.half_inning == 0) ? in_event.away_stars : in_event.home_stars;
     u8 adjusted_swing = 0; //0=miss, 1=slap, 2=charge, 3=star, 4=bunt
+    u8 charge_status = PowerPC::MMU::HostRead_U8(guard, aAB_ChargeStatus);
     //Adjust swing to definition
     if (star_swing != 0 && stars_avaialable > 0){
-        adjusted_swing = 3;
+        adjusted_swing = (charge_status == 0) ? 3 : 5; //3=star, 5=ChargeStar
     }
     else {
         adjusted_swing = swing_type + 1;
@@ -659,8 +660,11 @@ void StatTracker::logPitch(const Core::CPUThreadGuard& guard, Event& in_event){
 
     //Use adjusted swing if swing and miss, else 0 (or 4 for bunt)
     u8 any_swing = PowerPC::MMU::HostRead_U8(guard, aAB_AnySwing);  // 0=No swing, 1=swing
-    if (any_swing == 0) {
+    if (any_swing == 0 && charge_status == 0) {
         in_event.pitch->type_of_swing = 0;
+    }
+    else if (any_swing == 0 && charge_status == 3) {
+        in_event.pitch->type_of_swing = 6;
     }
     else if (any_swing >= 1){
         in_event.pitch->type_of_swing = adjusted_swing;

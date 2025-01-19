@@ -173,7 +173,9 @@ static const std::map<u8, std::string> cTypeOfSwing = {
     {1, "Slap"},
     {2, "Charge"},
     {3, "Star"},
-    {4, "Bunt"}
+    {4, "Bunt"},
+    {5, "Charge - Star"},
+    {6, "Charge - None"}
 };
 
 static const std::map<u8, std::string> cPosition = {
@@ -427,6 +429,7 @@ static const u32 aAB_ContactRandInt3 = 0x802ec014;
 
 static const u32 aAB_ContactAbsolute = 0x80890950;
 static const u32 aAB_ContactQuality  = 0x80890954;
+static const u32 aAB_ChargeStatus   = 0x808909AD; //0=no charge, 2=charged swing, 3=charged no swing
 static const u32 aAB_TypeOfSwing    = 0x8089099B; //1=Slap, 2=Charge, 3=Bunt. Set on contact
 static const u32 aAB_ChargeUp       = 0x80890968;
 static const u32 aAB_ChargeDown     = 0x8089096C;
