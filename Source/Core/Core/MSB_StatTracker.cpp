@@ -799,10 +799,26 @@ void StatTracker::logPitch(const Core::CPUThreadGuard& guard, Event& in_event){
               << " AnySwing=" << std::to_string(PowerPC::MMU::HostRead_U8(guard, aAB_AnySwing)) << " Final=" << std::to_string(in_event.pitch->type_of_swing) << "\n";
 }
 
+void StatTracker::logFielderIDs(const Core::CPUThreadGuard& guard, Contact* in_contact){
+    FielderTracker& tracker = m_fielder_tracker[!m_game_info.getCurrentEvent().half_inning];
+
+    // Ensure fielders are updated
+    tracker.evaluateFielders(guard);
+
+    // Loop over positions 0-8 and store roster IDs
+    for (u8 pos = 0; pos < 9; ++pos){
+        u32 aFielderRosterLoc_calc = aFielder_CharId + (pos * cFielder_Offset);
+        u8 roster_loc = PowerPC::MMU::HostRead_U8(guard, aFielderRosterLoc_calc);
+        in_contact->fielder_ids[pos] = roster_loc;
+    }
+}
+
 void StatTracker::logContactResult(const Core::CPUThreadGuard& guard, Contact* in_contact){
     std::cout << "Logging Contact Result\n";
 
     u8 result = PowerPC::MMU::HostRead_U8(guard, aAB_ContactResult);
+    
+    logFielderIDs(guard, in_contact);
 
     //Log primary contact result (and secondary if possible)
     if (result == 1 || result == 2){
@@ -1187,6 +1203,17 @@ std::string StatTracker::getStatJSON(bool inDecode, bool hide_riokey){
 
                 json_stream << "          \"" << contact->ball_max_height.name << "\": " << floatConverter(contact->ball_max_height.get_value()) << ",\n";
                 json_stream << "          \"" << contact->ball_hang_time.name << "\": \"" << std::dec << contact->ball_hang_time.get_value() << "\",\n";
+
+                json_stream << "          \"Fielder Char Ids\": [";
+                for (size_t i = 0; i < contact->fielder_ids.size(); ++i) {
+                    json_stream << decode("Character", contact->fielder_ids[i], inDecode);
+
+                    if (i < contact->fielder_ids.size() - 1) {
+                        json_stream << ", ";
+                    }
+                }
+                json_stream << "],\n";
+                
                 json_stream << "          \"Contact Result - Primary\": "         << decode("PrimaryContactResult", contact->primary_contact_result, inDecode) << ",\n";
                 json_stream << "          \"Contact Result - Secondary\": "       << decode("SecondaryContactResult", contact->secondary_contact_result, inDecode);
 
