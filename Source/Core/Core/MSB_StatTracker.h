@@ -636,6 +636,9 @@ public:
         //A+=other (sac-fly??, sac-bunt??, GRD??)
         u8 secondary_contact_result;
 
+        // array to store fielder ID's init as -1 for all
+        std::array<int, 9> fielder_ids = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+
         std::optional<Fielder> first_fielder;
         std::optional<Fielder> collect_fielder;
     };
@@ -1009,6 +1012,7 @@ public:
     void logEventState(const Core::CPUThreadGuard& guard, Event& in_event);
     void logContact(const Core::CPUThreadGuard& guard, Event& in_event);
     void logPitch(const Core::CPUThreadGuard& guard, Event& in_event);
+    void logFielderIDs(const Core::CPUThreadGuard& guard, Contact* in_contact);
     void logContactResult(const Core::CPUThreadGuard& guard, Contact* in_contact);
     void logFinalResults(const Core::CPUThreadGuard& guard, Event& in_event);
     //void logManualSelectLocks(Event& in_event);
