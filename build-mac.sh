@@ -18,6 +18,8 @@ else
         CMAKE_FLAGS+=' -DMACOS_CODE_SIGNING="ON"'
 fi
 
+CMAKE_FLAGS+=' -DCMAKE_POLICY_VERSION_MINIMUM=3.5'
+
 # Move into the build directory, run CMake, and compile the project
 mkdir -p build
 pushd build

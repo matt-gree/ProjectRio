@@ -73,7 +73,7 @@ jobs:
           move $FILE_NAME ..\..\artifact\
       - name: "Publish"
         if: success()
-        uses: actions/upload-artifact@v2-preview
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: "./artifact/"
@@ -162,7 +162,7 @@ jobs:
             artifact_name: ProjectRio-macOS
             build_config: release
     name: "macOS ${{ matrix.build_type }}"
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -228,7 +228,7 @@ jobs:
           mv "${FILE_NAME}" ../../artifact/
       - name: "Publish"
         if: success()
-        uses: actions/upload-artifact@v2-preview
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: "./artifact/"
