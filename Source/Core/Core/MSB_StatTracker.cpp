@@ -1326,6 +1326,7 @@ std::string StatTracker::getHUDJSON(std::string in_event_num, Event& in_curr_eve
     }
     json_stream << "  \"TagSetID\": " << tag_set_id_str << ",\n";
     json_stream << "  \"StadiumID\": " << decode("Stadium", m_game_info.stadium, inDecode) << ",\n";
+    json_stream << "  \"Innings Selected\": " << std::to_string(m_game_info.innings_selected) << ",\n";
     json_stream << "  \"First Batting Team\": " << std::to_string(m_game_info.first_batting_team) << ",\n";
     json_stream << "  \"Star Skills On\": "      << std::to_string(m_game_info.star_skills_on) << ",\n";
     json_stream << "  \"Mercy On\": "            << std::to_string(m_game_info.mercy_on) << ",\n";
