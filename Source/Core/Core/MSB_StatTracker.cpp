@@ -709,6 +709,13 @@ void StatTracker::logEventState(const Core::CPUThreadGuard& guard, Event& in_eve
     in_event.pitcher_roster_loc = PowerPC::MMU::HostRead_U8(guard, aAB_PitcherRosterID);
     in_event.batter_roster_loc  = PowerPC::MMU::HostRead_U8(guard, aAB_BatterRosterID);
     in_event.catcher_roster_loc = PowerPC::MMU::HostRead_U8(guard, aFielder_RosterLoc + (1 * cFielder_Offset));
+
+    // Track both teams' current batter positions so the fielding team's is preserved across half-innings
+    // half_inning: 0 = top (away bats), 1 = bottom (home bats) -> Away=0, Home=1
+    u8 batting_side = (in_event.half_inning == 0) ? 0 : 1;
+    m_game_info.current_batter_roster_locs[batting_side] = in_event.batter_roster_loc;
+    in_event.away_batter_roster_loc = m_game_info.current_batter_roster_locs[0];
+    in_event.home_batter_roster_loc = m_game_info.current_batter_roster_locs[1];
 }
 
 void StatTracker::logContact(const Core::CPUThreadGuard& guard, Event& in_event){
@@ -1305,6 +1312,18 @@ std::string StatTracker::getHUDJSON(std::string in_event_num, Event& in_curr_eve
 
     json_stream << "{\n";
 
+    json_stream << "  \"GameID\": \"" << m_game_info.game_id << "\",\n";
+    std::string tag_set_id_str = "\"\"";
+    if (m_game_info.tag_set_id.has_value()){
+        tag_set_id_str = std::to_string(m_game_info.tag_set_id.value());
+    }
+    json_stream << "  \"TagSetID\": " << tag_set_id_str << ",\n";
+    json_stream << "  \"StadiumID\": " << decode("Stadium", m_game_info.stadium, inDecode) << ",\n";
+    json_stream << "  \"First Batting Team\": " << std::to_string(m_game_info.first_batting_team) << ",\n";
+    json_stream << "  \"Star Skills On\": "      << std::to_string(m_game_info.star_skills_on) << ",\n";
+    json_stream << "  \"Mercy On\": "            << std::to_string(m_game_info.mercy_on) << ",\n";
+    json_stream << "  \"Team 0 Logo\": "         << std::to_string(m_game_info.team0_logo) << ",\n";
+    json_stream << "  \"Team 1 Logo\": "         << std::to_string(m_game_info.team1_logo) << ",\n";   
     json_stream << "  \"Event Num\": \""             << in_event_num << "\",\n";
     json_stream << "  \"Away Player\": \""           << m_game_info.getAwayTeamPlayer().GetUsername() << "\",\n";
     json_stream << "  \"Home Player\": \""           << m_game_info.getHomeTeamPlayer().GetUsername() << "\",\n";
@@ -1321,8 +1340,10 @@ std::string StatTracker::getHUDJSON(std::string in_event_num, Event& in_curr_eve
     json_stream << "  \"Pitcher Stamina\": "         << std::to_string(in_curr_event.pitcher_stamina) << ",\n";
     json_stream << "  \"Chemistry Links on Base\": " << std::to_string(in_curr_event.chem_links_ob) << ",\n";
     json_stream << "  \"" << in_curr_event.num_outs_during_play.name << "\": " << in_curr_event.num_outs_during_play.get_key_value_string().second << ",\n";
-    json_stream << "  \"Pitcher Roster Loc\": "      << std::to_string(in_curr_event.pitcher_roster_loc) << ",\n";
-    json_stream << "  \"Batter Roster Loc\": "       << std::to_string(in_curr_event.batter_roster_loc) << ",\n";
+    json_stream << "  \"Pitcher Roster Loc\": "        << std::to_string(in_curr_event.pitcher_roster_loc) << ",\n";
+    json_stream << "  \"Batter Roster Loc\": "         << std::to_string(in_curr_event.batter_roster_loc) << ",\n";
+    json_stream << "  \"Away Batter Roster Loc\": "    << std::to_string(in_curr_event.away_batter_roster_loc) << ",\n";
+    json_stream << "  \"Home Batter Roster Loc\": "    << std::to_string(in_curr_event.home_batter_roster_loc) << ",\n";
 
     for (int team=0; team < 2; ++team){
         for (int roster=0; roster < cRosterSize; ++roster){
@@ -1347,6 +1368,7 @@ std::string StatTracker::getHUDJSON(std::string in_event_num, Event& in_curr_eve
             json_stream << "    \"Captain\": "       << std::to_string(roster == captain_roster_loc) << ",\n";
             json_stream << "    \"Fielding Hand\": " << decode("Hand", char_summary.fielding_hand, inDecode) << ",\n";
             json_stream << "    \"Batting Hand\": "  << decode("Hand", char_summary.batting_hand, inDecode) << ",\n";
+            json_stream << "    \"Fielding Position\": " << decode("Position", m_fielder_tracker[team].fielder_map[roster].current_pos, inDecode) << ",\n";
 
             //=== Defensive Stats ===
             EndGameRosterDefensiveStats& def_stat = char_summary.end_game_defensive_stats;
@@ -1767,6 +1789,13 @@ void StatTracker::initPlayerInfo(const Core::CPUThreadGuard& guard){
     m_game_info.start_unix_date_time = std::to_string(unix_time);
     m_game_info.start_local_date_time = std::asctime(std::localtime(&unix_time));
     m_game_info.start_local_date_time.pop_back();
+
+    m_game_info.first_batting_team = PowerPC::MMU::HostRead_U8(guard, aFirstBattingTeam);
+    m_game_info.star_skills_on     = PowerPC::MMU::HostRead_U8(guard, aStarSkillsOn);
+    m_game_info.mercy_on           = PowerPC::MMU::HostRead_U8(guard, aMercyOn);
+    m_game_info.team0_logo         = PowerPC::MMU::HostRead_U8(guard, aTeam0_Logo);
+    m_game_info.team1_logo         = PowerPC::MMU::HostRead_U8(guard, aTeam1_Logo);
+
     //Collect port info for players
     if (m_game_info.team0_port == 0xFF && m_game_info.team1_port == 0xFF){
         //From Roeming

@@ -314,6 +314,9 @@ static const u32 aStadiumId = 0x800E8705;
 static const u32 aTeam0_Captain = 0x80353083;
 static const u32 aTeam1_Captain = 0x80353087;
 
+static const u32 aTeam0_Logo = 0x808929b0;
+static const u32 aTeam1_Logo = 0x808929bc;
+
 static const u32 aTeam0_Captain_Roster_Loc = 0x80892A83;
 static const u32 aTeam1_Captain_Roster_Loc = 0x80892A87;
 
@@ -321,6 +324,9 @@ static const u32 aAwayTeam_Score = 0x808928A4;
 static const u32 aHomeTeam_Score = 0x808928CA;
 
 static const u32 aInningsSelected = 0x8089294A;
+static const u8 aFirstBattingTeam = 0x803c5f40;
+static const u8 aStarSkillsOn = 0x803c5f41;
+static const u8 aMercyOn = 0x803c5f43;
 
 static const u8 c_roster_table_offset = 0xa0;
 
@@ -700,6 +706,9 @@ public:
         u8 batter_roster_loc;
         u8 catcher_roster_loc;
 
+        u8 away_batter_roster_loc = 0; // Current batter for away team (persists when fielding)
+        u8 home_batter_roster_loc = 0; // Current batter for home team (persists when fielding)
+
         u8 balls;
         u8 strikes;
         u8 outs;
@@ -748,6 +757,9 @@ public:
         u8 team0_captain_roster_loc = 0xFF;
         u8 team1_captain_roster_loc = 0xFF;
 
+        u8 team0_logo;
+        u8 team1_logo;
+
         LocalPlayers::LocalPlayers::Player team0_player;
         LocalPlayers::LocalPlayers::Player team1_player;
         int avg_ping = 0;
@@ -762,6 +774,10 @@ public:
         u8 innings_selected;
         u8 innings_played;
 
+        u8 first_batting_team;
+        u8 star_skills_on;
+        u8 mercy_on;
+
         //Netplay info
         bool netplay;
         std::string netplay_opponent_alias;
@@ -771,6 +787,9 @@ public:
 
         //Quit?
         u8 quitter_team = 0xFF;
+
+        //Tracks the current batter for each team across half-inning switches; index 0=Away, 1=Home
+        std::array<u8, 2> current_batter_roster_locs = {0, 0};
 
         //Bookkeeping
         //int pitch_num = 0;
