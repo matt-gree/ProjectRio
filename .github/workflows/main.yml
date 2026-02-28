@@ -163,6 +163,7 @@ jobs:
             build_config: release
     name: "macOS ${{ matrix.build_type }}"
     runs-on: macos-14
+    timeout-minutes: 90
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -194,6 +195,20 @@ jobs:
         #  tar -xf MacOSX12.3.tar.xz
         #  rm MacOSX12.3.tar.xz
         #  sudo mv MacOSX12.3 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/
+      - name: "Cache Homebrew downloads"
+        uses: actions/cache@v3
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/main.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-brew-
+      - name: "Cache ccache"
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
       - name: "Download and Install prerequisites"
         if: success()
         shell: bash
@@ -202,6 +217,7 @@ jobs:
           echo "HOMEBREW_NO_AUTO_UPDATE=1" >> $GITHUB_ENV
           brew upgrade cmake
           brew install \
+          ccache \
           ffmpeg \
           libpng \
           pkgconfig \
