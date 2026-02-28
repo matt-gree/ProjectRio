@@ -324,9 +324,9 @@ static const u32 aAwayTeam_Score = 0x808928A4;
 static const u32 aHomeTeam_Score = 0x808928CA;
 
 static const u32 aInningsSelected = 0x8089294A;
-static const u8 aFirstBattingTeam = 0x803c5f40;
-static const u8 aStarSkillsOn = 0x803c5f41;
-static const u8 aMercyOn = 0x803c5f43;
+static const u32 aFirstBattingTeam = 0x803c5f40;
+static const u32 aStarSkillsOn = 0x803c5f41;
+static const u32 aMercyOn = 0x803c5f43;
 
 static const u8 c_roster_table_offset = 0xa0;
 
@@ -706,6 +706,9 @@ public:
         u8 batter_roster_loc;
         u8 catcher_roster_loc;
 
+        std::array<u16, 18> away_inning_scores = {};
+        std::array<u16, 18> home_inning_scores = {};
+
         u8 away_batter_roster_loc = 0; // Current batter for away team (persists when fielding)
         u8 home_batter_roster_loc = 0; // Current batter for home team (persists when fielding)
 
@@ -757,8 +760,8 @@ public:
         u8 team0_captain_roster_loc = 0xFF;
         u8 team1_captain_roster_loc = 0xFF;
 
-        u8 team0_logo;
-        u8 team1_logo;
+        u32 team0_logo;
+        u32 team1_logo;
 
         LocalPlayers::LocalPlayers::Player team0_player;
         LocalPlayers::LocalPlayers::Player team1_player;

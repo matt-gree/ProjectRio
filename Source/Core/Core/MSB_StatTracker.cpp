@@ -716,6 +716,13 @@ void StatTracker::logEventState(const Core::CPUThreadGuard& guard, Event& in_eve
     m_game_info.current_batter_roster_locs[batting_side] = in_event.batter_roster_loc;
     in_event.away_batter_roster_loc = m_game_info.current_batter_roster_locs[0];
     in_event.home_batter_roster_loc = m_game_info.current_batter_roster_locs[1];
+
+    // Read per-inning scores for each team up to the current inning
+    // Memory layout: current score (u16) followed by 18 inning scores (u16 each)
+    for (u8 i = 0; i < in_event.inning && i < 18; ++i) {
+        in_event.away_inning_scores[i] = PowerPC::MMU::HostRead_U16(guard, aAwayTeam_Score + ((i + 1) * 2));
+        in_event.home_inning_scores[i] = PowerPC::MMU::HostRead_U16(guard, aHomeTeam_Score + ((i + 1) * 2));
+    }
 }
 
 void StatTracker::logContact(const Core::CPUThreadGuard& guard, Event& in_event){
@@ -1331,6 +1338,21 @@ std::string StatTracker::getHUDJSON(std::string in_event_num, Event& in_curr_eve
     json_stream << "  \"Half Inning\": "             << std::to_string(in_curr_event.half_inning) << ",\n";
     json_stream << "  \"Away Score\": "              << std::dec << in_curr_event.away_score << ",\n";
     json_stream << "  \"Home Score\": "              << std::dec << in_curr_event.home_score << ",\n";
+
+    json_stream << "  \"Away Inning Scores\": [";
+    for (u8 i = 0; i < in_curr_event.inning && i < 18; ++i) {
+        json_stream << in_curr_event.away_inning_scores[i];
+        if (i < in_curr_event.inning - 1) json_stream << ", ";
+    }
+    json_stream << "],\n";
+
+    json_stream << "  \"Home Inning Scores\": [";
+    for (u8 i = 0; i < in_curr_event.inning && i < 18; ++i) {
+        json_stream << in_curr_event.home_inning_scores[i];
+        if (i < in_curr_event.inning - 1) json_stream << ", ";
+    }
+    json_stream << "],\n";
+
     json_stream << "  \"Balls\": "                   << std::to_string(in_curr_event.balls) << ",\n";
     json_stream << "  \"Strikes\": "                 << std::to_string(in_curr_event.strikes) << ",\n";
     json_stream << "  \"Outs\": "                    << std::to_string(in_curr_event.outs) << ",\n";
@@ -1793,8 +1815,8 @@ void StatTracker::initPlayerInfo(const Core::CPUThreadGuard& guard){
     m_game_info.first_batting_team = PowerPC::MMU::HostRead_U8(guard, aFirstBattingTeam);
     m_game_info.star_skills_on     = PowerPC::MMU::HostRead_U8(guard, aStarSkillsOn);
     m_game_info.mercy_on           = PowerPC::MMU::HostRead_U8(guard, aMercyOn);
-    m_game_info.team0_logo         = PowerPC::MMU::HostRead_U8(guard, aTeam0_Logo);
-    m_game_info.team1_logo         = PowerPC::MMU::HostRead_U8(guard, aTeam1_Logo);
+    m_game_info.team0_logo         = PowerPC::MMU::HostRead_U32(guard, aTeam0_Logo);
+    m_game_info.team1_logo         = PowerPC::MMU::HostRead_U32(guard, aTeam1_Logo);
 
     //Collect port info for players
     if (m_game_info.team0_port == 0xFF && m_game_info.team1_port == 0xFF){
