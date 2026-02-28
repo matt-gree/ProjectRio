@@ -933,13 +933,13 @@ public:
             for (u8 pos=0; pos < cRosterSize; ++pos){
                 u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cRoster_Offset) + (10 * cRoster_Offset * team_id) + cBattingOrderAndPosition_Offset;
 
-                u8 roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
+                u8 fielder_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
 
-                std::cout << "RosterLoc:" << std::to_string(roster_loc) 
-                          << " Init Pos=" << cPosition.at(pos) << std::endl;
+                std::cout << "RosterLoc:" << std::to_string(pos) 
+                          << " Init Pos=" << cPosition.at(fielder_loc) << std::endl;
 
-                fielder_map[roster_loc].current_pos = pos;
-                fielder_map[roster_loc].previous_pos = pos;
+                fielder_map[pos].current_pos = fielder_loc;
+                fielder_map[pos].previous_pos = fielder_loc;
             }
         }
 
@@ -954,19 +954,18 @@ public:
             for (u8 pos=0; pos < cRosterSize; ++pos){
                 u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cRoster_Offset) + (10 * cRoster_Offset * team_id) + cBattingOrderAndPosition_Offset;
 
-                u8 roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
+                u8 fielder_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
 
-                //If new position, mark changed (unless this is the first pitch of the AB (pos==0xFF))
-                //Then set new position
-                if (fielder_map[roster_loc].current_pos != pos){
-                    std::cout << " Team=" << std::to_string(team_id) << " RosterLoc:" << std::to_string(roster_loc) 
-                                << " swapped from " << cPosition.at(fielder_map[roster_loc].current_pos)
-                                << " to " << cPosition.at(pos) << std::endl; 
-                    fielder_map[roster_loc].current_pos = pos; 
+                //If new position, mark changed, then set new position
+                if (fielder_map[pos].current_pos != fielder_loc){
+                    std::cout << " Team=" << std::to_string(team_id) << " RosterLoc:" << std::to_string(pos)
+                                << " swapped from " << cPosition.at(fielder_map[pos].current_pos)
+                                << " to " << cPosition.at(fielder_loc) << std::endl;
+                    fielder_map[pos].current_pos = fielder_loc;
                 }
 
                 //Increment the number of pitches this player has seen at this position
-                ++fielder_map[roster_loc].pitch_count_by_position[pos];
+                ++fielder_map[pos].pitch_count_by_position[fielder_loc];
                 //std::cout << " Team=" << std::to_string(team_id) << " RosterLoc=" << std::to_string(roster_loc)
                 //          << " Pos=" << std::to_string(pos) << "++" << std::endl; 
             }
