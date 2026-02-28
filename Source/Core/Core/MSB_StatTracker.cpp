@@ -1329,8 +1329,16 @@ std::string StatTracker::getHUDJSON(std::string in_event_num, Event& in_curr_eve
     json_stream << "  \"First Batting Team\": " << std::to_string(m_game_info.first_batting_team) << ",\n";
     json_stream << "  \"Star Skills On\": "      << std::to_string(m_game_info.star_skills_on) << ",\n";
     json_stream << "  \"Mercy On\": "            << std::to_string(m_game_info.mercy_on) << ",\n";
-    json_stream << "  \"Team 0 Logo\": "         << std::to_string(m_game_info.team0_logo) << ",\n";
-    json_stream << "  \"Team 1 Logo\": "         << std::to_string(m_game_info.team1_logo) << ",\n";   
+    {
+        auto it0 = cLogoIdToTeamName.find(m_game_info.team0_logo);
+        std::string name0 = (it0 != cLogoIdToTeamName.end()) ? it0->second : "Unknown";
+        json_stream << "  \"Team 0 Name\": \""  << name0 << "\",\n";
+    }
+    {
+        auto it1 = cLogoIdToTeamName.find(m_game_info.team1_logo);
+        std::string name1 = (it1 != cLogoIdToTeamName.end()) ? it1->second : "Unknown";
+        json_stream << "  \"Team 1 Name\": \""  << name1 << "\",\n";
+    }
     json_stream << "  \"Event Num\": \""             << in_event_num << "\",\n";
     json_stream << "  \"Away Player\": \""           << m_game_info.getAwayTeamPlayer().GetUsername() << "\",\n";
     json_stream << "  \"Home Player\": \""           << m_game_info.getHomeTeamPlayer().GetUsername() << "\",\n";

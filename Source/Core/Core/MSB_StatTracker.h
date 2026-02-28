@@ -136,6 +136,57 @@ static const std::map<u8, std::string> cStadiumIdToStadiumName = {
     {0x6, "Toy Field"}
 };
 
+static const std::map<u32, std::string> cLogoIdToTeamName = {
+    {0,  "Mario Sunshines"},
+    {1,  "Mario All Stars"},
+    {2,  "Mario Heroes"},
+    {3,  "Mario Fireballs"},
+    {4,  "Luigi Mansioneers"},
+    {5,  "Luigi Leapers"},
+    {6,  "Luigi Gentlemen"},
+    {7,  "Luigi Vacuums"},
+    {8,  "Peach Monarchs"},
+    {9,  "Peach Princesses"},
+    {10, "Peach Roses"},
+    {11, "Peach Dynasties"},
+    {12, "Daisy Queen Bees"},
+    {13, "Daisy Petals"},
+    {14, "Daisy Lillies"},
+    {15, "Daisy Cupids"},
+    {16, "Yoshi Islanders"},
+    {17, "Yoshi Flutters"},
+    {18, "Yoshi Eggs"},
+    {19, "Yoshi Speed Stars"},
+    {20, "Birdo Bows"},
+    {21, "Birdo Fans"},
+    {22, "Birdo Beauties"},
+    {23, "Birdo Models"},
+    {24, "Wario Greats"},
+    {25, "Wario Beasts"},
+    {26, "Wario Garlics"},
+    {27, "Wario Steakheads"},
+    {28, "Waluigi Flankers"},
+    {29, "Waluigi Mashers"},
+    {30, "Waluigi Mystiques"},
+    {31, "Waluigi Smart Alecks"},
+    {32, "DK Kongs"},
+    {33, "DK Animals"},
+    {34, "DK Explorers"},
+    {35, "DK Wild Ones"},
+    {36, "Diddy Tails"},
+    {37, "Diddy Red Caps"},
+    {38, "Diddy Survivors"},
+    {39, "Diddy Ninjas"},
+    {40, "Bowser Monsters"},
+    {41, "Bowser Black Stars"},
+    {42, "Bowser Flames"},
+    {43, "Bowser Blue Shells"},
+    {44, "Jr Pixies"},
+    {45, "Jr Rookies"},
+    {46, "Jr Fangs"},
+    {47, "Jr Bombers"}
+};
+
 static const std::map<u8, std::string> cTypeOfContactToHR = {
     {0xFF, "Miss"},
     {0, "Sour - Left"},
@@ -882,7 +933,7 @@ public:
             for (u8 pos=0; pos < cRosterSize; ++pos){
                 u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cFielder_Offset) + (10 * cRoster_Offset * team_id);
 
-                u8 roster_loc = PowerPC::MMU::HostRead_U8(guard, aFielderRosterLoc_calc);
+                u8 roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
 
                 std::cout << "RosterLoc:" << std::to_string(roster_loc) 
                           << " Init Pos=" << cPosition.at(pos) << std::endl;
@@ -903,7 +954,7 @@ public:
             for (u8 pos=0; pos < cRosterSize; ++pos){
                 u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cFielder_Offset) + (10 * cRoster_Offset * team_id);
 
-                u8 roster_loc = PowerPC::MMU::HostRead_U8(guard, aFielderRosterLoc_calc);
+                u8 roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
 
                 //If new position, mark changed (unless this is the first pitch of the AB (pos==0xFF))
                 //Then set new position
@@ -1124,7 +1175,7 @@ public:
 
             //Remove current event, wasn't finished
             auto it = m_game_info.events.find(m_game_info.event_num);
-            if ((&it != NULL) && (it != m_game_info.events.end()))
+            if (it != m_game_info.events.end())
             {
               m_game_info.events.erase(it);
             }
