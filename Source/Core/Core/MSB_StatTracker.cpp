@@ -1863,6 +1863,11 @@ void StatTracker::initPlayerInfo(const Core::CPUThreadGuard& guard){
         std::cout << "Info:  Away Port=" << std::to_string(m_game_info.away_port) << ", Home Port=" << std::to_string(m_game_info.home_port) << "\n";
         std::cout << "Info:  Away Player=" << (away_player_name) << ", Home Player=" << (home_player_name) << "\n";
 
+        // Initialize fielder trackers for both teams at game start so the batting
+        // team's tracker is ready from the first pitch, not just the fielding team's.
+        m_fielder_tracker[0].initTracker(guard, 0);
+        m_fielder_tracker[1].initTracker(guard, 1);
+
         initCaptains(guard);
     }
 }

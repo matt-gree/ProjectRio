@@ -1,3 +1,5 @@
+# Ignore pyenv local version file (Python version for CI is managed in .github/workflows/main.yml)
+.python-version
 # Ignore image thumbnail files created by windows
 Thumbs.db
 # Ignore Finder view option files created by OS X

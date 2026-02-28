@@ -226,6 +226,9 @@ jobs:
           hidapi \
           icu4c \
           qt@6
+          # Homebrew's fmt (pulled in by ffmpeg) conflicts with the bundled Externals/fmt.
+          # Unlink it so CMake uses the vendored version.
+          brew unlink fmt || true
       - name: "Build ${{ matrix.build_type }} Project Rio"
         if: success()
         shell: bash

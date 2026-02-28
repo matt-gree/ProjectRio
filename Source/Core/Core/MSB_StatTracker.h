@@ -931,7 +931,7 @@ public:
             team_id = inTeamId;
             initialized = true;
             for (u8 pos=0; pos < cRosterSize; ++pos){
-                u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cRoster_Offset) + (10 * cRoster_Offset * team_id) + cFielder_Offset;
+                u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cRoster_Offset) + (10 * cRoster_Offset * team_id) + cBattingOrderAndPosition_Offset;
 
                 u8 roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
 
@@ -952,7 +952,7 @@ public:
         //Scans field to see who is playing which position and increments counts for positions
         void evaluateFielders(const Core::CPUThreadGuard& guard) {
             for (u8 pos=0; pos < cRosterSize; ++pos){
-                u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cRoster_Offset) + (10 * cRoster_Offset * team_id) + cFielder_Offset;
+                u32 aFielderRosterLoc_calc = aBattingOrderAndPosition_Team0 + (pos * cRoster_Offset) + (10 * cRoster_Offset * team_id) + cBattingOrderAndPosition_Offset;
 
                 u8 roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aFielderRosterLoc_calc));
 
