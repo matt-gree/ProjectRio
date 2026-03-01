@@ -2,13 +2,14 @@ include(ExternalProject)
 
 set(MOLTENVK_VERSION "v1.2.3")
 
-# Build only for the native architecture to avoid cross-compilation failures.
-# The universal "macos" target tries to build both arm64 + x86_64, which fails
-# when cross-compiling on arm64 runners (e.g. macos-14 GitHub Actions).
+# MoltenVK's Makefile only provides a universal "macos" target (arm64 + x86_64)
+# and no per-architecture targets like "macos-arm64". The universal build can
+# fail on CI runners that lack cross-compilation SDKs. To work around this, we
+# call xcodebuild directly with ARCHS restricted to the native architecture.
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
-  set(MOLTENVK_BUILD_TARGET "macos-arm64")
+  set(MOLTENVK_ARCHS "arm64")
 else()
-  set(MOLTENVK_BUILD_TARGET "macos-x86_64")
+  set(MOLTENVK_ARCHS "x86_64")
 endif()
 
 ExternalProject_Add(MoltenVK
@@ -19,7 +20,7 @@ ExternalProject_Add(MoltenVK
 
   PATCH_COMMAND ${CMAKE_CURRENT_LIST_DIR}/patch.sh ${CMAKE_SOURCE_DIR}/Externals/MoltenVK/patches/ ${MOLTENVK_VERSION}
 
-  BUILD_COMMAND make -C <SOURCE_DIR> ${MOLTENVK_BUILD_TARGET}
+  BUILD_COMMAND bash -c "xcodebuild build -project MoltenVKPackaging.xcodeproj -scheme 'MoltenVK Package (macOS only)' -destination 'generic/platform=macOS' ARCHS=${MOLTENVK_ARCHS} ONLY_ACTIVE_ARCH=YES"
   BUILD_IN_SOURCE ON
   BUILD_BYPRODUCTS <SOURCE_DIR>/Package/Release/MoltenVK/dylib/macOS/libMoltenVK.dylib
 
