@@ -567,7 +567,7 @@ endif()
 
 if(APPLE)
   include(BundleUtilities)
-  set(BUNDLE_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Dolphin.app)
+  set(BUNDLE_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ProjectRio.app)
 
   # Ask for an application bundle.
   set_target_properties(dolphin-emu PROPERTIES
@@ -575,7 +575,7 @@ if(APPLE)
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
     XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/DolphinEmu.entitlements"
     XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "--deep --options=runtime"
-    OUTPUT_NAME Dolphin
+    OUTPUT_NAME ProjectRio
     )
 
   # Copy qt.conf into the bundle
@@ -583,8 +583,8 @@ if(APPLE)
   set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/qt.conf" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
   # Copy icon into the bundle
-  target_sources(dolphin-emu PRIVATE "${CMAKE_SOURCE_DIR}/Data/Dolphin.icns")
-  set_source_files_properties("${CMAKE_SOURCE_DIR}/Data/Dolphin.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  target_sources(dolphin-emu PRIVATE "${CMAKE_SOURCE_DIR}/Data/ProjectRio.icns")
+  set_source_files_properties("${CMAKE_SOURCE_DIR}/Data/ProjectRio.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
   # Manually include plugins
   find_package(Qt6QMacStylePlugin REQUIRED PATHS ${Qt6Widgets_DIR})

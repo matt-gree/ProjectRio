@@ -5,7 +5,7 @@ QT_BREW_PATH=$(brew --prefix qt@6)
 CMAKE_FLAGS="-DQt6_DIR=${QT_BREW_PATH}/lib/cmake/Qt6 -DENABLE_NOGUI=false"
 
 DATA_SYS_PATH="./Data/Sys/"
-BINARY_PATH="./build/Binaries/Dolphin.app/Contents/Resources/"
+BINARY_PATH="./build/Binaries/ProjectRio.app/Contents/Resources/"
 
 BREW_PREFIX=$(brew --prefix)
 export LIBRARY_PATH=$LIBRARY_PATH:${BREW_PREFIX}/lib:/usr/local/lib:/usr/lib/
