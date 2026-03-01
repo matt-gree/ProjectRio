@@ -30,7 +30,7 @@
 #include "QtUtils/SignalDaemon.h"
 #endif
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
 #include <qpa/qplatformnativeinterface.h>
 #endif
 
