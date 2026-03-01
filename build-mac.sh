@@ -7,7 +7,8 @@ CMAKE_FLAGS="-DQt6_DIR=${QT_BREW_PATH}/lib/cmake/Qt6 -DENABLE_NOGUI=false"
 DATA_SYS_PATH="./Data/Sys/"
 BINARY_PATH="./build/Binaries/Dolphin.app/Contents/Resources/"
 
-export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib:/usr/lib/
+BREW_PREFIX=$(brew --prefix)
+export LIBRARY_PATH=$LIBRARY_PATH:${BREW_PREFIX}/lib:/usr/local/lib:/usr/lib/
 
 if [[ -z "${CERTIFICATE_MACOS_APPLICATION}" ]]
     then
