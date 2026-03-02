@@ -272,7 +272,7 @@ void StatTracker::lookForTriggerEvents(const Core::CPUThreadGuard& guard)
                         m_event_state = EVENT_STATE::PITCH_RESULT;
                     }
                     else if(PowerPC::MMU::HostRead_U8(guard, aAB_PickoffAttempt)) {
-                        std::cout << "Pick of attempt detected!\n";
+                        std::cout << "Pick off attempt detected!\n";
                         m_event_state = EVENT_STATE::MONITOR_RUNNERS;
                         m_game_info.getCurrentEvent().pick_off_attempt = true;
                     }
@@ -711,11 +711,8 @@ void StatTracker::logEventState(const Core::CPUThreadGuard& guard, Event& in_eve
     in_event.catcher_roster_loc = PowerPC::MMU::HostRead_U8(guard, aFielder_RosterLoc + (1 * cFielder_Offset));
 
     // Track both teams' current batter positions so the fielding team's is preserved across half-innings
-    // half_inning: 0 = top (away bats), 1 = bottom (home bats) -> Away=0, Home=1
-    u8 batting_side = (in_event.half_inning == 0) ? 0 : 1;
-    m_game_info.current_batter_roster_locs[batting_side] = in_event.batter_roster_loc;
-    in_event.away_batter_roster_loc = m_game_info.current_batter_roster_locs[0];
-    in_event.home_batter_roster_loc = m_game_info.current_batter_roster_locs[1];
+    in_event.away_batter_roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aAB_AwayBatter)) - 1;
+    in_event.home_batter_roster_loc = static_cast<u8>(PowerPC::MMU::HostRead_U32(guard, aAB_HomeBatter)) - 1;
 
     // Read per-inning scores for each team up to the current inning
     // Memory layout: current score (u16) followed by 18 inning scores (u16 each)

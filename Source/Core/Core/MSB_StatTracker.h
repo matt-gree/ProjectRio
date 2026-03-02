@@ -338,6 +338,36 @@ static const std::map<u8, std::string> cManualSelectDecode = {
     {0x4,  "Closest to Drop"},
 };
 
+// From Nuche
+static const std::map<u8, std::string> cGameControlState = {
+    {0x0,  "default"},
+    {0x1,  "AtBat"},
+    {0x2,  "LiveBall"},
+    {0x3,  "InningTransition"},
+    {0x4,  "LoadGame"},
+    {0x5,  "GameStartMovie"},
+    {0x6,  "TransitionToMinigameStart"},
+    {0x7,  "TransitionPrepareNextGame"},
+    {0x8,  "TransitionMainFunction"},
+    {0x9,  "EndOfGame?"},
+    {0xb,  "Paused"},
+    {0xd,  "HowToPlayScreen"},
+    {0xe,  "MVP/EndGameScreen"},
+    {0xf,  "MinigamePostGameTransition"},
+    {0x13, "HomeRunEnd"},
+    {0x14, "HomeRunLap"},
+    {0x15, "PostReplayBatterCelebration"},
+    {0x16, "StarChanceVsScreen"},
+    {0x17, "ChampionshipScreen"},
+    {0x19, "MinigameNewRound?"},
+    {0x1a, "MinigameTransitionToBatting1"},
+    {0x1c, "MinigameSelectScreen"},
+    {0x1d, "ToyFieldStadiumLoadScreen"},
+    {0x1e, "CharacterSelectMinigameToyField"},
+    {0x21, "ReadyMinigameScreen"},
+    {0x22, "PostMinigameMenu"},
+};
+
 //Const for structs
 static const int cRosterSize = 9;
 static const int cNumOfTeams = 2;
@@ -351,9 +381,9 @@ static const u32 aGameControlStateCurr = 0x80892aaa;
 static const u32 aGameControlStatePrev = 0x80892aab;
 
 static const u32 aAB_PitchThrown     = 0x8088A81B;
-static const u32 aAB_ContactResult   = 0x808926B3; //0=InAir, 1=Landed, 2=Landed (almost caught), 3=Caught, FF=Foul
+static const u32 aAB_ContactResult   = 0x808926B3; //0=InAir, 1=Landed, 2=Fielded, 3=Caught, FF=Foul
 static const u32 aAB_ContactMade     = 0x808909a1; //Boolean, from Roeming
-static const u32 aAB_PickoffAttempt  = 0x80892857;
+static const u32 aAB_PickoffAttempt  = 0x80892857; //0=None, 1=Pickoff, 2=Steal
 
 static const u32 aAB_GameIsLive  = 0x8036F3A9; //0 at beginning of game and inbetween innings/changes
 static const u32 aAB_PlayIsReadyToStart  = 0x808909AA; //Key addr that tells us when all addrs have been initialized for the play
@@ -441,6 +471,9 @@ static const u32 aAB_ChemLinksOnBase = 0x808909BA;
 static const u32 aAB_RunnerOn1       = 0x8088F09D;
 static const u32 aAB_RunnerOn2       = 0x8088F1F1;
 static const u32 aAB_RunnerOn3       = 0x8088F345;
+
+static const u32 aAB_AwayBatter     = 0x80892a68; //int but can be downcast to byte
+static const u32 aAB_HomeBatter     = 0x80892a6c; //always valid; will show up to bat for next inning for fielding team
 
 //Pitch
 static const u32 aAB_PitcherRosterID       = 0x80890AD9;
