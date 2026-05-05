@@ -14,6 +14,7 @@
 #include "Common/Logging/Log.h"
 #include "Common/StringUtil.h"
 #include "Core/CheatCodes.h"
+#include "Core/Core.h"
 
 namespace Gecko
 {
@@ -144,13 +145,29 @@ std::vector<GeckoCode> LoadCodes(const Common::IniFile& globalIni, const Common:
     std::optional<std::string> BuiltInGeckoCodes;
     if (gameId == "GYQE01")
     {
-      BuiltInGeckoCodes = MSSB_BuiltInGeckoCodes;
-      if (is_netplay)
+      // Project Rio's MSSB built-in codes are loaded for "hosted" sessions
+      // (Netplay or local play with a Rio Config game mode/TagSet active), or
+      // when the user has explicitly opted in via the per-game Gecko-tab toggle.
+      // For default local play they are skipped so the default Gecko region
+      // stays small enough to leave memory-card support intact and so the
+      // "Boot to Main Menu" code does not block save loading. The Project Rio
+      // stat tracker silently produces no data when these codes are off.
+      bool local_opt_in = false;
+      if (const auto* core_section = localIni.GetSection("Core"))
+        core_section->Get("UseExpandedGeckoSpace", &local_opt_in, false);
+      const bool hosted_session = is_netplay || Core::isTagSetActive();
+
+      if (hosted_session || local_opt_in)
       {
-        if (isDisableReplays)
-          BuiltInGeckoCodes = BuiltInGeckoCodes.value() + MSSB_DisableReplays;
-        if (isNightStadium)
-          BuiltInGeckoCodes = BuiltInGeckoCodes.value() + MSSB_NightStadium;
+        BuiltInGeckoCodes = MSSB_BuiltInGeckoCodes;
+
+        if (is_netplay)
+        {
+          if (isDisableReplays)
+            BuiltInGeckoCodes = BuiltInGeckoCodes.value() + MSSB_DisableReplays;
+          if (isNightStadium)
+            BuiltInGeckoCodes = BuiltInGeckoCodes.value() + MSSB_NightStadium;
+        }
       }
     }
     // else if (gameId == "GFTE01")

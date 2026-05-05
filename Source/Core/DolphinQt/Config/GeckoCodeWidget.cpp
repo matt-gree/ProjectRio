@@ -23,6 +23,7 @@
 #include "Common/IniFile.h"
 
 #include "Core/ConfigManager.h"
+#include "Core/Core.h"
 #include "Core/GeckoCode.h"
 #include "Core/GeckoCodeConfig.h"
 #include "Core/NetPlayProto.h"
@@ -89,13 +90,23 @@ void GeckoCodeWidget::CreateWidgets()
   //m_code_view->setReadOnly(true);
   //m_code_view->setFixedHeight(line_height * 10);
 
-  m_expanded_gecko_space = new QCheckBox(tr("Use expanded Gecko code space (disables memory cards)"));
+  m_expanded_gecko_space = new QCheckBox(tr("Enable Project Rio code injection (disables memory cards)"));
   m_expanded_gecko_space->setToolTip(
-      tr("Enables a larger Gecko code region by reusing memory-card scratch RAM. "
-         "Required for large code sets (e.g. edited Classics-style mods), but prevents "
-         "memory cards from working in local play. Always on during Netplay regardless "
-         "of this setting."));
-  m_expanded_gecko_space->setEnabled(!m_game_id.empty() && !NetPlay::IsNetPlayRunning());
+      tr("When on, Project Rio's built-in Gecko codes are loaded and the expanded "
+         "Gecko code region is used. Required for the Project Rio stat tracker, the "
+         "in-game HUD changes, and large user code sets, but prevents memory cards "
+         "from working in local play (the \"Boot to Main Menu\" built-in skips the "
+         "memory-card load).\n\n"
+         "When off, only your enabled user codes are applied and memory cards work "
+         "normally; Project Rio stat tracking is disabled.\n\n"
+         "Always on during Netplay or when a Rio Config game mode is selected, "
+         "regardless of this setting."));
+  // The toggle is read at boot time (PatchEngine::LoadPatches), so changing it
+  // mid-emulation has no effect on the running session. Disable it during
+  // emulation and during Netplay so users do not assume otherwise.
+  const bool emulation_running = Core::GetState() != Core::State::Uninitialized;
+  m_expanded_gecko_space->setEnabled(!m_game_id.empty() && !NetPlay::IsNetPlayRunning() &&
+                                     !emulation_running);
 
   m_add_code = new NonDefaultQPushButton(tr("&Add New Code..."));
   m_edit_code = new NonDefaultQPushButton(tr("&Edit Code..."));
