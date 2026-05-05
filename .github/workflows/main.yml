@@ -1,12 +1,13 @@
 name: Builds
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "**_release"
       - "master"
   pull_request:
-    branches: 
+    branches:
       - "**_release"
       - "master"
     paths-ignore:
