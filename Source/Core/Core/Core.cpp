@@ -1832,6 +1832,20 @@ bool GameSupportsTagSets()
 
 std::optional<std::pair<u32,u32>> getGameFreeMemory()
 {
+  // Decide whether to opt into the expanded Gecko code region. Using it overlaps
+  // memory-card scratch space, so for local play we only enable it when the user
+  // explicitly opts in via the per-game setting. Netplay always uses it, since
+  // memory-card support is irrelevant there and synced code lists tend to be larger.
+  bool use_expanded_space = NetPlay::IsNetPlayRunning();
+  if (!use_expanded_space)
+  {
+    Common::IniFile game_ini = SConfig::GetInstance().LoadLocalGameIni();
+    game_ini.GetIfExists<bool>("Core", "UseExpandedGeckoSpace", &use_expanded_space, false);
+  }
+
+  if (!use_expanded_space)
+    return std::nullopt;
+
   switch (mGameBeingPlayed) {
   case GameName::MarioBaseball:
     //return std::make_pair(0x802ED200, 0x802EE764);

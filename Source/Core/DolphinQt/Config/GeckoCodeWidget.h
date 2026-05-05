@@ -14,6 +14,7 @@ class CheatWarningWidget;
 #ifdef USE_RETRO_ACHIEVEMENTS
 class HardcoreWarningWidget;
 #endif  // USE_RETRO_ACHIEVEMENTS
+class QCheckBox;
 class QLabel;
 class QListWidget;
 class QListWidgetItem;
@@ -57,6 +58,8 @@ private:
   void SortEnabledCodesFirst();
   void SortDisabledCodesFirst();
   void MakeEnabledList();
+  void OnExpandedGeckoSpaceToggled(bool checked);
+  void LoadExpandedGeckoSpaceSetting();
 
   std::string m_game_id;
   std::string m_gametdb_id;
@@ -76,6 +79,7 @@ private:
   QPushButton* m_edit_code;
   QPushButton* m_remove_code;
   QPushButton* m_download_codes;
+  QCheckBox* m_expanded_gecko_space;
   std::vector<Gecko::GeckoCode> m_gecko_codes;
   bool m_restart_required;
 };
