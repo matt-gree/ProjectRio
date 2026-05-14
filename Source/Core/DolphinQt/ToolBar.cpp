@@ -62,10 +62,6 @@ void ToolBar::OnEmulationStateChanged(Core::State state)
   bool running = state != Core::State::Uninitialized;
   m_stop_action->setEnabled(running);
   m_fullscreen_action->setEnabled(running);
-  // The Rio Config game-mode/TagSet selection is read at boot time and feeds
-  // the Gecko code/region setup, so changing it mid-emulation has no effect on
-  // the running session. Disable the action so users do not assume otherwise.
-  m_local_play_action->setEnabled(!running);
 
   bool playing = running && state != Core::State::Paused;
   UpdatePausePlayButtonState(playing);

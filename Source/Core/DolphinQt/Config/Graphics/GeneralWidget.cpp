@@ -13,6 +13,9 @@
 #include <QSignalBlocker>
 #include <QVBoxLayout>
 
+#include "Common/FileUtil.h"
+#include "Common/IniFile.h"
+
 #include "Core/Config/GraphicsSettings.h"
 #include "Core/Config/MainSettings.h"
 #include "Core/ConfigManager.h"
@@ -44,6 +47,33 @@ GeneralWidget::GeneralWidget(GraphicsWindow* parent)
     OnEmulationStateChanged(state != Core::State::Uninitialized);
   });
   OnEmulationStateChanged(Core::GetState() != Core::State::Uninitialized);
+
+  ApplyRioCodesGate();
+}
+
+void GeneralWidget::ApplyRioCodesGate()
+{
+  // The MSSB-specific overlays (player names, training mode, draft timer) are
+  // implemented via the Project Rio built-in Gecko codes. When the per-game
+  // toggle disables those codes, hide the overlay checkboxes and force their
+  // backing values off so a stale "true" cannot have any effect at next boot.
+  Common::IniFile game_ini_local;
+  game_ini_local.Load(File::GetUserPath(D_GAMESETTINGS_IDX) + std::string("GYQE01.ini"));
+
+  bool rio_codes_enabled = false;
+  if (const auto* core_section = game_ini_local.GetSection("Core"))
+    core_section->Get("UseExpandedGeckoSpace", &rio_codes_enabled, false);
+
+  m_show_player_names->setVisible(rio_codes_enabled);
+  m_training_mode->setVisible(rio_codes_enabled);
+  m_draft_timer->setVisible(rio_codes_enabled);
+
+  if (!rio_codes_enabled)
+  {
+    Config::SetBaseOrCurrent(Config::GFX_SHOW_PLAYER_NAMES, false);
+    Config::SetBaseOrCurrent(Config::GFX_TRAINING_MODE, false);
+    Config::SetBaseOrCurrent(Config::GFX_DRAFT_TIMER, false);
+  }
 }
 
 void GeneralWidget::CreateWidgets()
