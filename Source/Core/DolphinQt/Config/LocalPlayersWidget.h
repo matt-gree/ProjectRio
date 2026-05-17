@@ -10,10 +10,12 @@
 #include "Common/HttpRequest.h"
 #include "Core/LocalPlayers.h"
 
+class QCheckBox;
 class QComboBox;
 class QHBoxLayout;
 class QGridLayout;
 class QGroupBox;
+class QLabel;
 class QPushButton;
 class QListWidget;
 class QTextEdit;
@@ -40,6 +42,15 @@ private:
 
   void ConnectWidgets();
 
+  // Reads/writes the per-game MSSB toggle that controls whether Project Rio's
+  // built-in Gecko codes are loaded (and the expanded Gecko region is used).
+  bool LoadRioCodesEnabled() const;
+  void SaveRioCodesEnabled(bool enabled);
+  // Recompute enabled/disabled state for every input. Called at construction,
+  // on emulation state changes, and when the toggle is flipped.
+  void ApplyLockState();
+  void OnRioCodesToggled(bool enabled);
+
   QGroupBox* m_player_box;
   QGroupBox* m_options_box;
   QGridLayout* m_player_layout;
@@ -52,7 +63,10 @@ private:
   QComboBox* m_player_list_4;
   std::array<QComboBox*, 5> m_port_array;
 
+  QCheckBox* m_enable_rio_codes;
+  QLabel* m_rio_codes_hint;
   QComboBox* m_local_tagset;
+  QLabel* m_tagset_label;
   QTextEdit* m_game_mode_description;
   Common::HttpRequest m_http{std::chrono::minutes{3}};
 

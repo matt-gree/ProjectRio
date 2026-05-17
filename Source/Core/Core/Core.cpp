@@ -1832,6 +1832,24 @@ bool GameSupportsTagSets()
 
 std::optional<std::pair<u32,u32>> getGameFreeMemory()
 {
+  // Decide whether to opt into the expanded Gecko code region. Using it overlaps
+  // memory-card scratch space, so for default local play we leave it off and the
+  // standard region is used (memory cards keep working). It is enabled when:
+  //   - Netplay is running, or
+  //   - a Rio Config game mode (TagSet) is active for local play, or
+  //   - the user explicitly opted in via the per-game Gecko-tab toggle.
+  // The same predicate gates loading of the Project Rio built-in Gecko codes in
+  // GeckoCodeConfig::LoadCodes, so the two stay in sync.
+  bool use_expanded_space = NetPlay::IsNetPlayRunning() || isTagSetActive();
+  if (!use_expanded_space)
+  {
+    Common::IniFile game_ini = SConfig::GetInstance().LoadLocalGameIni();
+    game_ini.GetIfExists<bool>("Core", "UseExpandedGeckoSpace", &use_expanded_space, false);
+  }
+
+  if (!use_expanded_space)
+    return std::nullopt;
+
   switch (mGameBeingPlayed) {
   case GameName::MarioBaseball:
     //return std::make_pair(0x802ED200, 0x802EE764);

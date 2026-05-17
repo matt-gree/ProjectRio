@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <utility>
 
+#include <QCheckBox>
 #include <QCursor>
 #include <QFontDatabase>
 #include <QFormLayout>
@@ -22,8 +23,10 @@
 #include "Common/IniFile.h"
 
 #include "Core/ConfigManager.h"
+#include "Core/Core.h"
 #include "Core/GeckoCode.h"
 #include "Core/GeckoCodeConfig.h"
+#include "Core/NetPlayProto.h"
 
 #include "DolphinQt/Config/CheatCodeEditor.h"
 #include "DolphinQt/Config/CheatWarningWidget.h"
@@ -87,6 +90,24 @@ void GeckoCodeWidget::CreateWidgets()
   //m_code_view->setReadOnly(true);
   //m_code_view->setFixedHeight(line_height * 10);
 
+  m_expanded_gecko_space = new QCheckBox(tr("Enable Project Rio code injection (disables memory cards)"));
+  m_expanded_gecko_space->setToolTip(
+      tr("When on, Project Rio's built-in Gecko codes are loaded and the expanded "
+         "Gecko code region is used. Required for the Project Rio stat tracker, the "
+         "in-game HUD changes, and large user code sets, but prevents memory cards "
+         "from working in local play (the \"Boot to Main Menu\" built-in skips the "
+         "memory-card load).\n\n"
+         "When off, only your enabled user codes are applied and memory cards work "
+         "normally; Project Rio stat tracking is disabled.\n\n"
+         "Always on during Netplay or when a Rio Config game mode is selected, "
+         "regardless of this setting."));
+  // The toggle is read at boot time (PatchEngine::LoadPatches), so changing it
+  // mid-emulation has no effect on the running session. Disable it during
+  // emulation and during Netplay so users do not assume otherwise.
+  const bool emulation_running = Core::GetState() != Core::State::Uninitialized;
+  m_expanded_gecko_space->setEnabled(!m_game_id.empty() && !NetPlay::IsNetPlayRunning() &&
+                                     !emulation_running);
+
   m_add_code = new NonDefaultQPushButton(tr("&Add New Code..."));
   m_edit_code = new NonDefaultQPushButton(tr("&Edit Code..."));
   m_remove_code = new NonDefaultQPushButton(tr("&Remove Code"));
@@ -147,7 +168,10 @@ void GeckoCodeWidget::CreateWidgets()
   btn_layout->addWidget(m_download_codes);
 
   layout->addLayout(btn_layout);
+  layout->addWidget(m_expanded_gecko_space);
   setLayout(layout);
+
+  LoadExpandedGeckoSpaceSetting();
 }
 
 void GeckoCodeWidget::ConnectWidgets()
@@ -164,6 +188,8 @@ void GeckoCodeWidget::ConnectWidgets()
   connect(m_remove_code, &QPushButton::clicked, this, &GeckoCodeWidget::RemoveCode);
   connect(m_edit_code, &QPushButton::clicked, this, &GeckoCodeWidget::EditCode);
   connect(m_download_codes, &QPushButton::clicked, this, &GeckoCodeWidget::DownloadCodes);
+  connect(m_expanded_gecko_space, &QCheckBox::toggled, this,
+          &GeckoCodeWidget::OnExpandedGeckoSpaceToggled);
   connect(m_warning, &CheatWarningWidget::OpenCheatEnableSettings, this,
           &GeckoCodeWidget::OpenGeneralSettings);
 #ifdef USE_RETRO_ACHIEVEMENTS
@@ -413,6 +439,35 @@ void GeckoCodeWidget::DownloadCodes()
       tr("Downloaded %1 codes. (added %2, updated %3)")
                                    .arg(QString::number(codes.size()), QString::number(added_count),
                                         QString::number(updated_count)));
+}
+
+void GeckoCodeWidget::LoadExpandedGeckoSpaceSetting()
+{
+  if (m_game_id.empty())
+    return;
+
+  Common::IniFile game_ini_local;
+  game_ini_local.Load(File::GetUserPath(D_GAMESETTINGS_IDX) + m_game_id + ".ini");
+
+  bool enabled = false;
+  game_ini_local.GetIfExists<bool>("Core", "UseExpandedGeckoSpace", &enabled, false);
+
+  const QSignalBlocker blocker(m_expanded_gecko_space);
+  m_expanded_gecko_space->setChecked(enabled);
+}
+
+void GeckoCodeWidget::OnExpandedGeckoSpaceToggled(bool checked)
+{
+  if (m_game_id.empty())
+    return;
+
+  const auto ini_path =
+      std::string(File::GetUserPath(D_GAMESETTINGS_IDX)).append(m_game_id).append(".ini");
+
+  Common::IniFile game_ini_local;
+  game_ini_local.Load(ini_path);
+  game_ini_local.GetOrCreateSection("Core")->Set("UseExpandedGeckoSpace", checked);
+  game_ini_local.Save(ini_path);
 }
 
 void GeckoCodeWidget::MakeEnabledList()

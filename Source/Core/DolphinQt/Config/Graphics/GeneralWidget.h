@@ -37,6 +37,11 @@ private:
 
   void OnBackendChanged(const QString& backend_name);
   void OnEmulationStateChanged(bool running);
+  // Hides and force-disables the MSSB-specific overlay toggles (player names,
+  // training mode, draft timer) when the per-game Rio-codes toggle is off,
+  // since those overlays depend on the built-in Gecko codes that the toggle
+  // gates.
+  void ApplyRioCodesGate();
 
   // Video
   QGridLayout* m_video_layout;

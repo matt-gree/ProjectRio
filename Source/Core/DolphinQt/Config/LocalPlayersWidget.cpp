@@ -4,11 +4,13 @@
 #include <iosfwd>
 #include "DolphinQt/Config/LocalPlayersWidget.h"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
+#include <QSignalBlocker>
 #include <QVBoxLayout>
 #include <QListWidget>
 #include <QTextEdit>
@@ -46,6 +48,18 @@ LocalPlayersWidget::LocalPlayersWidget(QWidget* parent) : QWidget(parent)
   PopulateTagsetCombobox();
   ConnectWidgets();
   SetTagSet();
+
+  // Reflect persisted Rio-codes toggle and current emulation state.
+  {
+    const QSignalBlocker blocker(m_enable_rio_codes);
+    m_enable_rio_codes->setChecked(LoadRioCodesEnabled());
+  }
+  ApplyLockState();
+
+  // React to emulation state changes so inputs lock down without needing
+  // the window to be reopened.
+  connect(&Settings::Instance(), &Settings::EmulationStateChanged, this,
+          [this](Core::State) { ApplyLockState(); });
 }
 
 // create the basic UI elements for the local players widget
@@ -63,6 +77,21 @@ void LocalPlayersWidget::CreateLayout()
   m_game_mode_description->setFixedHeight(line_height * 10);
   m_game_mode_description->setVerticalScrollBarPolicy(
       Qt::ScrollBarAlwaysOn);
+
+  m_enable_rio_codes = new QCheckBox(tr("Enable Project Rio code injection (disables memory cards)"));
+  m_enable_rio_codes->setToolTip(
+      tr("Loads Project Rio's built-in Gecko codes and uses the expanded Gecko "
+         "code region. Required to use Game Modes and for the stat tracker, HUD, "
+         "and other Rio features. Disables memory-card support in local play.\n\n"
+         "Mirrors the toggle in the per-game Gecko Codes tab. Read at boot, so "
+         "it cannot be changed while emulation is running."));
+
+  m_rio_codes_hint = new QLabel(tr(
+      "Enable Project Rio code injection above to use Game Modes."));
+  m_rio_codes_hint->setWordWrap(true);
+  m_rio_codes_hint->setStyleSheet(QStringLiteral("color: gray; font-style: italic;"));
+
+  m_tagset_label = new QLabel(tr("Game Mode:"));
 
   auto* tagset_description = new QLabel;
   tagset_description->setText(tr(
@@ -128,10 +157,12 @@ void LocalPlayersWidget::CreateLayout()
 
   auto* options_layout = new QGridLayout;
   options_layout->setAlignment(Qt::AlignTop);
-  options_layout->addWidget(new QLabel(tr("Game Mode:")), 0, 0);
-  options_layout->addWidget(m_local_tagset, 0, 1, 1, -1, Qt::AlignLeft);
-  options_layout->addWidget(tagset_description, 1, 0, 1, -1);
-  options_layout->addWidget(m_game_mode_description, 2, 0, 1, -1);
+  options_layout->addWidget(m_enable_rio_codes, 0, 0, 1, -1);
+  options_layout->addWidget(m_rio_codes_hint, 1, 0, 1, -1);
+  options_layout->addWidget(m_tagset_label, 2, 0);
+  options_layout->addWidget(m_local_tagset, 2, 1, 1, -1, Qt::AlignLeft);
+  options_layout->addWidget(tagset_description, 3, 0, 1, -1);
+  options_layout->addWidget(m_game_mode_description, 4, 0, 1, -1);
   m_options_box->setLayout(options_layout);
 
   auto* layout = new QHBoxLayout;
@@ -397,4 +428,71 @@ void LocalPlayersWidget::ConnectWidgets()
 
   connect(m_add_button, &QPushButton::clicked, this, &LocalPlayersWidget::OnAddPlayers);
   connect(m_remove_button, &QPushButton::clicked, this, &LocalPlayersWidget::OnRemovePlayers);
+
+  connect(m_enable_rio_codes, &QCheckBox::toggled, this, &LocalPlayersWidget::OnRioCodesToggled);
+}
+
+bool LocalPlayersWidget::LoadRioCodesEnabled() const
+{
+  // Project Rio is MSSB-centric, so the toggle lives in GYQE01's per-game ini
+  // alongside the matching widget in the Gecko Codes tab.
+  Common::IniFile game_ini_local;
+  game_ini_local.Load(File::GetUserPath(D_GAMESETTINGS_IDX) + std::string("GYQE01.ini"));
+
+  bool enabled = false;
+  if (const auto* core_section = game_ini_local.GetSection("Core"))
+    core_section->Get("UseExpandedGeckoSpace", &enabled, false);
+  return enabled;
+}
+
+void LocalPlayersWidget::SaveRioCodesEnabled(bool enabled)
+{
+  const auto ini_path =
+      std::string(File::GetUserPath(D_GAMESETTINGS_IDX)) + std::string("GYQE01.ini");
+
+  Common::IniFile game_ini_local;
+  game_ini_local.Load(ini_path);
+  game_ini_local.GetOrCreateSection("Core")->Set("UseExpandedGeckoSpace", enabled);
+  game_ini_local.Save(ini_path);
+}
+
+void LocalPlayersWidget::OnRioCodesToggled(bool enabled)
+{
+  SaveRioCodesEnabled(enabled);
+
+  // If the user turns the codes off, also clear any selected local Game Mode
+  // so an already-selected TagSet does not force codes back on at boot
+  // (see Core::getGameFreeMemory and GeckoCodeConfig::LoadCodes).
+  if (!enabled && m_local_tagset->currentIndex() != 0)
+  {
+    m_local_tagset->setCurrentIndex(0);
+    SetTagSet();
+  }
+
+  ApplyLockState();
+}
+
+void LocalPlayersWidget::ApplyLockState()
+{
+  const bool emulation_running = Core::GetState() != Core::State::Uninitialized;
+  const bool rio_codes_enabled = m_enable_rio_codes->isChecked();
+
+  // During emulation: every input is locked because both the Rio-codes toggle
+  // and the Game Mode selection are read at boot and have no effect on the
+  // running session.
+  m_enable_rio_codes->setEnabled(!emulation_running);
+  m_add_button->setEnabled(!emulation_running);
+  m_remove_button->setEnabled(!emulation_running);
+  m_player_list->setEnabled(!emulation_running);
+  for (auto* port : m_port_array)
+    port->setEnabled(!emulation_running);
+
+  // Game-mode controls are also gated on the Rio-codes toggle: without the
+  // built-in codes, Game Modes will not load correctly, so the dropdown is
+  // greyed out and a hint is shown.
+  const bool tagset_usable = rio_codes_enabled && !emulation_running;
+  m_tagset_label->setEnabled(tagset_usable);
+  m_local_tagset->setEnabled(tagset_usable);
+  m_game_mode_description->setEnabled(tagset_usable);
+  m_rio_codes_hint->setVisible(!rio_codes_enabled);
 }
